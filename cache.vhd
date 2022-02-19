@@ -55,10 +55,10 @@ ARCHITECTURE arch OF cache IS
 	SIGNAL request_addr : STD_LOGIC_VECTOR (31 DOWNTO 0);
 BEGIN
 	cache_process : PROCESS (clock, reset)
-    VARIABLE mem_read_addr : INTEGER RANGE 0 TO ram_size;
-	VARIABLE mem_write_addr : INTEGER RANGE 0 TO ram_size;
-	VARIABLE current_rw_byte_count : INTEGER RANGE 0 TO 4;
-	VARIABLE current_rw_word_count : INTEGER RANGE 0 TO 4;
+		VARIABLE mem_read_addr : INTEGER RANGE 0 TO ram_size;
+		VARIABLE mem_write_addr : INTEGER RANGE 0 TO ram_size;
+		VARIABLE current_rw_byte_count : INTEGER RANGE 0 TO 4;
+		VARIABLE current_rw_word_count : INTEGER RANGE 0 TO 4;
 	BEGIN
 		-- Initialize the cache by marking
 		-- all blocks invalid.
@@ -147,6 +147,9 @@ BEGIN
 				WHEN MEMORY_READ_WAIT =>
 					IF (m_read = '0') THEN
 						IF (current_rw_word_count = 4) THEN -- completed.
+							cache_checkup_table(request_block_idx)(7) <= '0'; -- Making this block valid.
+							cache_checkup_table(request_block_idx)(6) <= '1'; -- Making this block non-dirty.
+							cache_checkup_table(request_block_idx)(5 DOWNTO 0) <= request_tag; -- Update its tag.
 							current_state <= VALID_AND_MATCH;
 							current_rw_byte_count := 0;
 							mem_read_addr := 0;
@@ -159,7 +162,7 @@ BEGIN
 						mem_read_addr := mem_read_addr + 1;
 						m_read <= '0';
 						cache_memory(request_block_idx * 4 + current_rw_word_count)(current_rw_byte_count * 8 + 7 DOWNTO current_rw_byte_count * 8) <= m_readdata;
-                        current_rw_byte_count := current_rw_byte_count + 1;
+						current_rw_byte_count := current_rw_byte_count + 1;
 						IF (current_rw_byte_count = 4) THEN
 							current_rw_byte_count := 0;
 							current_rw_word_count := current_rw_word_count + 1;
