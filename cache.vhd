@@ -35,7 +35,7 @@ ARCHITECTURE arch OF cache IS
 	-- We define the checkup vector to have the following structure.
 	-- 0th to 5th bits are for tags.
 	-- 6th bit is the dirty bit.
-	-- 7th bit is the valid bit.
+	-- 7th bit is the invalid bit.
 	TYPE CACHE_CHECKUP IS ARRAY(block_num - 1 DOWNTO 0) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
 	TYPE STATE_TYPE IS (
 		IDLE,
@@ -53,21 +53,21 @@ ARCHITECTURE arch OF cache IS
 	SIGNAL request_tag : STD_LOGIC_VECTOR(5 DOWNTO 0);
 	SIGNAL request_word_idx : INTEGER RANGE 0 TO 3 := 0;
 	SIGNAL request_addr : STD_LOGIC_VECTOR (31 DOWNTO 0);
-	SIGNAL mem_read_addr : INTEGER RANGE 0 TO ram_size - 1 := 0;
-	SIGNAL mem_write_addr : INTEGER RANGE 0 TO ram_size - 1 := 0;
-	SIGNAL current_rw_byte_count : INTEGER RANGE 0 TO 3 := 0;
-	SIGNAL current_rw_word_count : INTEGER RANGE 0 TO 4 := 0;
 BEGIN
 	cache_process : PROCESS (clock, reset)
+    VARIABLE mem_read_addr : INTEGER RANGE 0 TO ram_size;
+	VARIABLE mem_write_addr : INTEGER RANGE 0 TO ram_size;
+	VARIABLE current_rw_byte_count : INTEGER RANGE 0 TO 4;
+	VARIABLE current_rw_word_count : INTEGER RANGE 0 TO 4;
 	BEGIN
 		-- Initialize the cache by marking
 		-- all blocks invalid.
-		IF (now < 10 ns) THEN
-        	s_waitrequest <= '0';
-            m_read <= '0';
-            m_write <= '0';
+		IF (now < 1 ps) THEN
+			s_waitrequest <= '0';
+			m_read <= '0';
+			m_write <= '0';
 			FOR i IN 0 TO block_num - 1 LOOP
-				cache_checkup_table(i) <= "01000000"; -- Invalid, non-dirty, with 0 tag.
+				cache_checkup_table(i) <= "11000000"; -- Invalid, non-dirty, with 0 tag.
 			END LOOP;
 		END IF;
 
@@ -75,7 +75,7 @@ BEGIN
 		-- simply re-initialize.
 		IF (reset'event AND reset = '1') THEN
 			FOR i IN 0 TO block_num - 1 LOOP
-				cache_checkup_table(i) <= "01000000"; -- Invalid, non-dirty, with 0 tag.
+				cache_checkup_table(i) <= "11000000"; -- Invalid, non-dirty, with 0 tag.
 			END LOOP;
 
 			-- If this is not a reset signal,
@@ -90,7 +90,7 @@ BEGIN
 					-- nothing. If either of them
 					-- is high, we shall proceed to other
 					-- states.
-					IF (s_write) OR (s_read'event AND s_read = '1')) THEN
+					IF ((s_write = '1') OR (s_read = '1')) THEN
 						-- If either works, we look into the specific address and
 						-- decide on dirty/non-dirty, match/mismatch, and valid/invalid
 						-- of the word being required.
@@ -133,56 +133,58 @@ BEGIN
 					-- If the requested block is non-dirty and mismatched,
 					-- we shall write data back to memory.
 					current_state <= MEMORY_READ_WAIT;
-					mem_read_addr <= to_integer(unsigned(s_addr(14 DOWNTO 2) & "00"));
-					current_rw_byte_count <= 0;
-					current_rw_word_count <= 0;
+					mem_read_addr := to_integer(unsigned(s_addr(14 DOWNTO 4) & "0000"));
+					current_rw_byte_count := 0;
+					current_rw_word_count := 0;
 				WHEN MISMATCH_AND_DIRTY =>
 					-- If te requested block is dirty and mismatched,
 					-- we shall write data back to memory.
 					current_state <= MEMORY_WRITE_WAIT;
-					mem_read_addr <= to_integer(unsigned(s_addr(14 DOWNTO 2) & "00"));
-					mem_write_addr <= to_integer(unsigned(cache_memory(request_block_idx * 4 + request_word_idx)(5 DOWNTO 0) & s_addr(8 DOWNTO 2) & "00"));
-					current_rw_byte_count <= 0;
-					current_rw_word_count <= 0;
+					mem_read_addr := to_integer(unsigned(s_addr(14 DOWNTO 4) & "0000"));
+					mem_write_addr := to_integer(unsigned(cache_memory(request_block_idx * 4 + request_word_idx)(5 DOWNTO 0) & s_addr(8 DOWNTO 4) & "0000"));
+					current_rw_byte_count := 0;
+					current_rw_word_count := 0;
 				WHEN MEMORY_READ_WAIT =>
 					IF (m_read = '0') THEN
-						IF (current_rw_byte_count = 4) THEN -- completed.
+						IF (current_rw_word_count = 4) THEN -- completed.
 							current_state <= VALID_AND_MATCH;
-							current_rw_byte_count <= 0;
-							mem_read_addr <= 0;
-							current_rw_word_count <= 0;
+							current_rw_byte_count := 0;
+							mem_read_addr := 0;
+							current_rw_word_count := 0;
 						ELSE -- Write data into the buffer, and initiate request.
 							m_read <= '1';
 							m_addr <= mem_read_addr;
 						END IF;
 					ELSIF (m_waitrequest = '0') THEN -- Memory completed, update operation.
-						mem_read_addr <= mem_read_addr + 1;
+						mem_read_addr := mem_read_addr + 1;
 						m_read <= '0';
-						cache_memory(request_block_idx * 4 + current_rw_word_count)(current_rw_byte_count * 8 - 1 DOWNTO current_rw_byte_count * 8 - 8) <= m_readdata;
-						IF (current_rw_byte_count = 3) THEN
-							current_rw_byte_count <= 0;
-							current_rw_word_count <= current_rw_word_count + 1;
+						cache_memory(request_block_idx * 4 + current_rw_word_count)(current_rw_byte_count * 8 + 7 DOWNTO current_rw_byte_count * 8) <= m_readdata;
+                        current_rw_byte_count := current_rw_byte_count + 1;
+						IF (current_rw_byte_count = 4) THEN
+							current_rw_byte_count := 0;
+							current_rw_word_count := current_rw_word_count + 1;
 						END IF;
 					END IF;
 				WHEN MEMORY_WRITE_WAIT =>
 
 					IF (m_write = '0') THEN
-						IF (current_rw_byte_count = 4) THEN -- completed.
+						IF (current_rw_word_count = 4) THEN -- completed.
 							current_state <= MEMORY_READ_WAIT;
-							current_rw_byte_count <= 0;
-							current_rw_word_count <= 0;
-							mem_write_addr <= 0;
+							current_rw_byte_count := 0;
+							current_rw_word_count := 0;
+							mem_write_addr := 0;
 						ELSE -- Write data into the buffer, and initiate request.
 							m_write <= '1';
 							m_addr <= mem_write_addr;
-							m_writedata <= cache_memory(request_block_idx * 4 + current_rw_word_count)(current_rw_byte_count * 8 - 1 DOWNTO current_rw_byte_count * 8 - 8);
+							m_writedata <= cache_memory(request_block_idx * 4 + current_rw_word_count)(current_rw_byte_count * 8 + 7 DOWNTO current_rw_byte_count * 8);
 						END IF;
 					ELSIF (m_waitrequest = '0') THEN -- Memory completed, update operation.
-						mem_write_addr <= mem_write_addr + 1;
+						mem_write_addr := mem_write_addr + 1;
+						current_rw_byte_count := current_rw_byte_count + 1;
 						m_write <= '0';
-						IF (current_rw_byte_count = 3) THEN
-							current_rw_byte_count <= 0;
-							current_rw_word_count <= current_rw_word_count + 1;
+						IF (current_rw_byte_count = 4) THEN
+							current_rw_byte_count := 0;
+							current_rw_word_count := current_rw_word_count + 1;
 						END IF;
 					END IF;
 
@@ -191,9 +193,9 @@ BEGIN
 					-- we are going to fetch contents from
 					-- memory no matter what. 
 					current_state <= MEMORY_READ_WAIT;
-					mem_read_addr <= to_integer(unsigned(s_addr(14 DOWNTO 2) & "00"));
-					current_rw_byte_count <= 0;
-					current_rw_word_count <= 0;
+					mem_read_addr := to_integer(unsigned(s_addr(14 DOWNTO 4) & "0000"));
+					current_rw_byte_count := 0;
+					current_rw_word_count := 0;
 			END CASE;
 		END IF;
 

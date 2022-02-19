@@ -115,7 +115,230 @@ end process;
 test_process : process
 begin
 
--- put your tests here
+	-- Test Cases:
+   	-- READ:
+    --	1.  Valid	, 	Non-dirty	,	Hit  
+	-- 	2.  Valid	, 	Non-dirty	,	Miss 
+	-- 	3.  Valid	, 	Dirty	 	,	Hit  
+	-- 	4.  Valid	,	Dirty		,	Miss 
+	-- 	5.  Invalid	,	Non-dirty	, 	Hit  (Impossible)
+	-- 	6.  Invalid	,	Non-dirty	, 	Miss 
+	-- 	7.  Invalid	,	Dirty		, 	Hit  (Impossible)
+	-- 	8.  Invalid	, 	Dirty		, 	Miss (Impossible)
+    
+   	-- WRITE:
+    --	9.  Valid	, 	Non-dirty	,	Hit  
+	-- 	10. Valid	, 	Non-dirty	,	Miss 
+	-- 	11. Valid	, 	Dirty	 	,	Hit  
+	-- 	12. Valid	,	Dirty		,	Miss 
+	-- 	13. Invalid	,	Non-dirty	, 	Hit  (Impossible)
+	-- 	14. Invalid	,	Non-dirty	, 	Miss 
+	-- 	15. Invalid	,	Dirty		, 	Hit  (Impossible)
+	-- 	16. Invalid	, 	Dirty		, 	Miss (Impossible)
+
+	--------------------------------------------
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+    -- 6. READ - Invalid, Non-dirty, Miss
+    s_addr <= (others => '0');
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+	
+    -- 14. WRITE - Invalid, Non-dirty, Miss
+    s_addr <= (others => '1');
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"AAAAAAAA";
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"AAAAAAAA" report "TEST 14 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+    -- 1. READ - Valid, Non-dirty, Hit
+    s_addr <= (31 => '1', others => '0');
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"FFFFFFFF";
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"FFFFFFFF" report "TEST 1 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+    -- 3. READ - Valid, Dirty, Hit
+    s_addr <= (31 => '1', others => '0');
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"FFFFFFF0";
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"FFFFFFF0" report "TEST 3 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+    -- 2. READ - Valid, Non-dirty, Miss
+    s_addr <= (others => '0');
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    s_addr <= (7 => '1', others => '0');
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+
+    
+	-- 4. READ - Valid, Dirty, Miss
+    s_addr <= (31|30|29|28|27|26|25 => '1', others => '0');
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"0A0B0C0D";
+    wait until falling_edge(s_waitrequest);
+    
+    s_addr <= (11 => '1', others => '0');
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"0B0C0D00" report "TEST 3 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+	-- 9. WRTIE - Valid, Non-dirty, Hit
+    s_addr <= (31|30 => '1', others => '0');
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"BBBBBBBB";
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"BBBBBBBB" report "TEST 9 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+    -- 11. WRTIE - Valid, Dirty, Hit
+    s_addr <= (31|30 => '1', others => '0');    
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"BBBBBBBB";
+    wait until falling_edge(s_waitrequest);
+    
+    s_addr <= (31|30 => '1', others => '0');
+     s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+        
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"CCCCCCCC";
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"CCCCCCCC" report "TEST 11 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+    -- 10. WRITE - Valid, Non-dirty, Miss
+    s_addr <= (31|30|29 => '1', others => '0');
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    s_addr <= (31|30|29|7 => '1', others => '0');
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"DDDDDDDD";
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"DDDDDDDD" report "TEST 10 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+    
+    
+    -- 12. WRITE - Valid, Dirty, Miss
+    s_addr <= (31|30|29|28 => '1', others => '0');
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"00000000";
+    wait until falling_edge(s_waitrequest);
+    
+    s_addr <= (31|30|29|28|7 => '1', others => '0');
+    s_read <= '0';
+    s_write <= '1';
+    s_writedata <= x"11111111";
+    wait until falling_edge(s_waitrequest);
+    
+    s_read <= '1';
+    s_write <= '0';
+    wait until falling_edge(s_waitrequest);
+    
+    assert s_readdata = x"11111111" report "TEST 10 IS FAILED!" severity error;
+    
+    s_read <= '0';
+    s_write <= '0';
+    wait for clk_period;
+
+	wait;
 	
 end process;
 	
