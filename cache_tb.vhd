@@ -139,185 +139,126 @@ BEGIN
         s_write <= '0';
         WAIT FOR clk_period;
 
-        -- 1. READ - Invalid, Non-dirty, Miss
-        s_addr <= (OTHERS => '0');
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"03020100" REPORT "TEST 1 FAILED! [Read,Invalid,Non-dirty,Miss]" SEVERITY error;
-
+        ASSERT s_readdata = x"03020100" REPORT "test 1 failed! [Read,Invalid,Non-Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-
-        -- 2. WRITE - Invalid, Non-dirty, Miss
-        s_addr <= (OTHERS => '1');
+        s_addr <= "00000000000000000000000000000001";
         s_read <= '0';
         s_write <= '1';
-        s_writedata <= x"AAAAAAAA";
+        s_writedata <= x"4A69D98A";
         WAIT UNTIL falling_edge(s_waitrequest);
-
+        s_addr <= "00000000000000000000000000000001";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"AAAAAAAA" REPORT "TEST 2 FAILED! [Read,Invalid,Non-dirty,Miss]" SEVERITY error;
-
+        ASSERT s_readdata = x"4A69D98A" REPORT "test 2 failed! [Write,Invalid,Non-Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-
-        -- 3. READ - Valid, Dirty, Hit
-        s_addr <= (OTHERS => '1');
+        s_addr <= "00000000000000000000001000000000";
+        s_read <= '1';
+        s_write <= '0';
+        WAIT UNTIL falling_edge(s_waitrequest);
+        ASSERT s_readdata = x"03020100" REPORT "test 3 failed! [Read,Valid,Non-Dirty,Miss]" SEVERITY error;
+        s_read <= '0';
+        s_write <= '0';
+        WAIT FOR clk_period;
+        s_addr <= "00000000000000000000001000000000";
+        s_read <= '1';
+        s_write <= '0';
+        WAIT UNTIL falling_edge(s_waitrequest);
+        ASSERT s_readdata = x"03020100" REPORT "test 4 failed! [Read,Valid,Non-Dirty,Hit]" SEVERITY error;
+        s_read <= '0';
+        s_write <= '0';
+        WAIT FOR clk_period;
+        s_addr <= "00000000000000000000001000000000";
         s_read <= '0';
         s_write <= '1';
-        s_writedata <= x"FFFFFFFF";
+        s_writedata <= x"DE42AE2D";
         WAIT UNTIL falling_edge(s_waitrequest);
-
+        s_addr <= "00000000000000000000001000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"FFFFFFFF" REPORT "TEST 3 FAILED! [Read,Valid,Dirty,Hit]" SEVERITY error;
-
+        ASSERT s_readdata = x"DE42AE2D" REPORT "test 5 failed! [Write,Valid,Non-Dirty,Hit]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-
-        -- 4. READ - Valid, Non-dirty, Hit
-        s_addr <= (OTHERS => '0');
-        s_read <= '1';
-        s_write <= '0';
-        s_writedata <= x"00000000";
-        WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"FFFFFFF0" REPORT "TEST 4 FAILED! [Read,Valid,Non-dirty,Hit]" SEVERITY error;
-
-        s_read <= '0';
-        s_write <= '0';
-        WAIT FOR clk_period;
-
-        -- 5. READ - Valid, Non-dirty, Miss
-        s_addr <= (9 => '1', OTHERS => '0');
-        s_read <= '1';
-        s_write <= '0';
-        WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"03020100" REPORT "TEST 5 FAILED! [Read,Valid,Non-dirty,Miss]" SEVERITY error;
-
-        s_read <= '0';
-        s_write <= '0';
-        WAIT FOR clk_period;
-
-        -- 6. READ - Valid, Dirty, Miss
-        s_addr <= (14 => '0', OTHERS => '1');
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
-        s_writedata <= x"0A0B0C0D";
+        s_writedata <= x"BCBE0DCE";
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        s_addr <= (11 => '1', OTHERS => '0');
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"0B0C0D00" REPORT "TEST 3 IS FAILED!" SEVERITY error;
-
+        ASSERT s_readdata = x"BCBE0DCE" REPORT "test 6 failed! [Write,Valid,Non-Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-
-        -- 9. WRTIE - Valid, Non-dirty, Hit
-        s_addr <= (31 | 30 => '1', OTHERS => '0');
-        s_read <= '1';
-        s_write <= '0';
-        WAIT UNTIL falling_edge(s_waitrequest);
-
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
-        s_writedata <= x"BBBBBBBB";
+        s_writedata <= x"B0990135";
         WAIT UNTIL falling_edge(s_waitrequest);
-
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"BBBBBBBB" REPORT "TEST 9 IS FAILED!" SEVERITY error;
-
+        ASSERT s_readdata = x"B0990135" REPORT "test 7 failed! [Write,Valid,Dirty,Hit]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        -- 11. WRTIE - Valid, Dirty, Hit
-        s_addr <= (31 | 30 => '1', OTHERS => '0');
-        s_read <= '0';
-        s_write <= '1';
-        s_writedata <= x"BBBBBBBB";
-        WAIT UNTIL falling_edge(s_waitrequest);
-
-        s_addr <= (31 | 30 => '1', OTHERS => '0');
-        s_read <= '0';
-        s_write <= '0';
-        WAIT FOR clk_period;
-
-        s_read <= '0';
-        s_write <= '1';
-        s_writedata <= x"CCCCCCCC";
-        WAIT UNTIL falling_edge(s_waitrequest);
-
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"CCCCCCCC" REPORT "TEST 11 IS FAILED!" SEVERITY error;
-
+        ASSERT s_readdata = x"B0990135" REPORT "test 8 failed! [Read,Valid,Dirty,Hit]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        -- 10. WRITE - Valid, Non-dirty, Miss
-        s_addr <= (31 | 30 | 29 => '1', OTHERS => '0');
-        s_read <= '1';
-        s_write <= '0';
-        WAIT UNTIL falling_edge(s_waitrequest);
-
-        s_addr <= (31 | 30 | 29 | 7 => '1', OTHERS => '0');
+        s_addr <= "00000000000000000000001000000000";
         s_read <= '0';
         s_write <= '1';
-        s_writedata <= x"DDDDDDDD";
+        s_writedata <= x"B99EAD80";
         WAIT UNTIL falling_edge(s_waitrequest);
-
+        s_addr <= "00000000000000000000001000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"DDDDDDDD" REPORT "TEST 10 IS FAILED!" SEVERITY error;
-
+        ASSERT s_readdata = x"B99EAD80" REPORT "test 9 failed! [Write,Valid,Non-Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        -- 12. WRITE - Valid, Dirty, Miss
-        s_addr <= (31 | 30 | 29 | 28 => '1', OTHERS => '0');
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
-        s_writedata <= x"00000000";
+        s_writedata <= x"D730742C";
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        s_addr <= (31 | 30 | 29 | 28 | 7 => '1', OTHERS => '0');
-        s_read <= '0';
-        s_write <= '1';
-        s_writedata <= x"11111111";
-        WAIT UNTIL falling_edge(s_waitrequest);
-
+        s_addr <= "00000000000000000000000000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-
-        ASSERT s_readdata = x"11111111" REPORT "TEST 10 IS FAILED!" SEVERITY error;
-
+        ASSERT s_readdata = x"D730742C" REPORT "test 10 failed! [Write,Valid,Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-
+        s_addr <= "00000000000000000000000000000000";
+        s_read <= '1';
+        s_write <= '0';
+        WAIT UNTIL falling_edge(s_waitrequest);
+        ASSERT s_readdata = x"D730742C" REPORT "test 11 failed! [Read,Valid,Dirty,Miss]" SEVERITY error;
+        s_read <= '0';
+        s_write <= '0';
+        WAIT FOR clk_period;
+        
+        REPORT "DONE";
         WAIT;
 
     END PROCESS;
