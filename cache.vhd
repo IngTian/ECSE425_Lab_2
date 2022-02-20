@@ -105,11 +105,11 @@ BEGIN
 
 						IF (cache_checkup_table(request_block_idx)(7) = '1') THEN -- The requested block is invalid.
 							current_state <= INVALID;
-						ELSIF (cache_checkup_table(request_block_idx)(5 DOWNTO 0) = request_tag) THEN -- The requested block is valid and match.
+						ELSIF (cache_checkup_table(request_block_idx)(5 DOWNTO 0) = s_addr(14 DOWNTO 9)) THEN -- The requested block is valid and match.
 							current_state <= VALID_AND_MATCH;
-						ELSIF (cache_checkup_table(request_block_idx)(6) = '1') THEN -- The requested block is valid, mis-matched, and dirty.
+						ELSIF (cache_checkup_table(request_block_idx)(6) = '0') THEN -- The requested block is valid, mis-matched, and dirty.
 							current_state <= MISMATCH_AND_DIRTY;
-						ELSIF (cache_checkup_table(request_block_idx)(6) = '0') THEN -- The requested block valid, mis-matched, and non-dirty.
+						ELSIF (cache_checkup_table(request_block_idx)(6) = '1') THEN -- The requested block valid, mis-matched, and non-dirty.
 							current_state <= MISMATCH_AND_NON_DIRTY;
 						END IF;
 					END IF;
