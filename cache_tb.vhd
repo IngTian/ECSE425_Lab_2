@@ -147,6 +147,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000000000000001";
         s_read <= '0';
         s_write <= '1';
@@ -160,6 +162,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '1';
         s_write <= '0';
@@ -168,6 +172,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '1';
         s_write <= '0';
@@ -176,6 +182,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '0';
         s_write <= '1';
@@ -189,6 +197,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
@@ -202,6 +212,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
@@ -215,6 +227,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000000000000000";
         s_read <= '1';
         s_write <= '0';
@@ -223,6 +237,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '0';
         s_write <= '1';
@@ -236,6 +252,8 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
+        
         s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
@@ -249,14 +267,17 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        s_addr <= "00000000000000000000000000000000";
+        
+        
+        s_addr <= "00000000000000000000001000000000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL falling_edge(s_waitrequest);
-        ASSERT s_readdata = x"D730742C" REPORT "test 11 failed! [Read,Valid,Dirty,Miss]" SEVERITY error;
+        ASSERT s_readdata = x"B99EAD80" REPORT "test 11 failed! [Read,Valid,Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
+        
         
         REPORT "DONE";
         WAIT;
