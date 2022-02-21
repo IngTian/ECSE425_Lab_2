@@ -123,7 +123,7 @@ BEGIN
 						s_readdata <= cache_memory(request_block_idx * 4 + request_word_idx);
 					ELSIF (s_write = '1') THEN -- Write case.
 						cache_memory(request_block_idx * 4 + request_word_idx) <= s_writedata;
-						cache_checkup_table(request_block_idx)(6) <= '1';
+						cache_checkup_table(request_block_idx)(6) <= '0';
 					END IF;
 
 					s_waitrequest <= '0'; -- Tell the core to proceed.
