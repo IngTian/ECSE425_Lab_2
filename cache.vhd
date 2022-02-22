@@ -49,12 +49,12 @@ ARCHITECTURE arch OF cache IS
 	SIGNAL cache_memory : CACHE_STORAGE;
 	SIGNAL cache_checkup_table : CACHE_CHECKUP;
 	SIGNAL current_state : state_type := IDLE;
-	SIGNAL request_block_idx : INTEGER RANGE 0 TO 31 := 0;
-	SIGNAL request_tag : STD_LOGIC_VECTOR(5 DOWNTO 0);
-	SIGNAL request_word_idx : INTEGER RANGE 0 TO 3 := 0;
-	SIGNAL request_addr : STD_LOGIC_VECTOR (31 DOWNTO 0);
 BEGIN
 	cache_process : PROCESS (clock, reset)
+		VARIABLE request_block_idx : INTEGER RANGE 0 TO 31 := 0;
+		VARIABLE request_tag : STD_LOGIC_VECTOR(5 DOWNTO 0);
+		VARIABLE request_word_idx : INTEGER RANGE 0 TO 3 := 0;
+		VARIABLE request_addr : STD_LOGIC_VECTOR (31 DOWNTO 0);
 		VARIABLE mem_read_addr : INTEGER RANGE 0 TO ram_size;
 		VARIABLE mem_write_addr : INTEGER RANGE 0 TO ram_size;
 		VARIABLE current_rw_byte_count : INTEGER RANGE 0 TO 4;
@@ -83,8 +83,6 @@ BEGIN
 		ELSIF (clock'event AND clock = '1') THEN
 			CASE current_state IS
 				WHEN IDLE =>
-					s_waitrequest <= '1'; -- The wait request is high by default.
-
 					-- In the idle state, we should
 					-- inquire on the s_read and s_write
 					-- status. If both signals are idle,
@@ -92,16 +90,24 @@ BEGIN
 					-- nothing. If either of them
 					-- is high, we shall proceed to other
 					-- states.
-					IF ((s_write = '1') OR (s_read = '1')) THEN
+					IF (s_waitrequest = '0') THEN
+						-- Normally, you cannot have the s_waitrequest low
+						-- when entering the IDLE state. If this is the case,
+						-- this must mean that we have completed an operation
+						-- in the previous clock cycle, and we must notify
+						-- the core.
+						s_waitrequest <= '1';
+
+					ELSIF ((s_write = '1') OR (s_read = '1')) THEN
 						-- If either works, we look into the specific address and
 						-- decide on dirty/non-dirty, match/mismatch, and valid/invalid
 						-- of the word being required.
 
 						-- Record address components for convenience.
-						request_tag <= s_addr(14 DOWNTO 9);
-						request_block_idx <= to_integer(unsigned(s_addr(8 DOWNTO 4)));
-						request_word_idx <= to_integer(unsigned(s_addr(3 DOWNTO 2)));
-						request_addr <= s_addr;
+						request_tag := s_addr(14 DOWNTO 9);
+						request_block_idx := to_integer(unsigned(s_addr(8 DOWNTO 4)));
+						request_word_idx := to_integer(unsigned(s_addr(3 DOWNTO 2)));
+						request_addr := s_addr;
 
 						IF (cache_checkup_table(request_block_idx)(7) = '0') THEN -- The requested block is invalid.
 							current_state <= INVALID;
@@ -141,7 +147,7 @@ BEGIN
 					-- we shall write data back to memory.
 					current_state <= MEMORY_WRITE_WAIT;
 					mem_read_addr := to_integer(unsigned(s_addr(14 DOWNTO 4) & "0000"));
-					mem_write_addr := to_integer(unsigned(cache_memory(request_block_idx * 4 + request_word_idx)(5 DOWNTO 0) & s_addr(8 DOWNTO 4) & "0000"));
+					mem_write_addr := to_integer(unsigned(cache_checkup_table(request_block_idx * 4 + request_word_idx)(5 DOWNTO 0) & s_addr(8 DOWNTO 4) & "0000"));
 					current_rw_byte_count := 0;
 					current_rw_word_count := 0;
 				WHEN MEMORY_READ_WAIT =>
