@@ -34,8 +34,8 @@ ARCHITECTURE arch OF cache IS
 	TYPE CACHE_STORAGE IS ARRAY(word_num - 1 DOWNTO 0) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
 	-- We define the checkup vector to have the following structure.
 	-- 0th to 5th bits are for tags.
-	-- 6th bit is the dirty bit.
-	-- 7th bit is the invalid bit.
+	-- 6th bit is the dirty bit (1 for dirty and 0 for clean).
+	-- 7th bit is the valid bit (1 for valid and 0 for invalid).
 	TYPE CACHE_CHECKUP IS ARRAY(block_num - 1 DOWNTO 0) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
 	TYPE STATE_TYPE IS (
 		IDLE,
@@ -67,7 +67,7 @@ BEGIN
 			m_read <= '0';
 			m_write <= '0';
 			FOR i IN 0 TO block_num - 1 LOOP
-				cache_checkup_table(i) <= "11000000"; -- Invalid, non-dirty, with 0 tag.
+				cache_checkup_table(i) <= "00000000"; -- Invalid, non-dirty, with 0 tag.
 			END LOOP;
 		END IF;
 
@@ -75,7 +75,7 @@ BEGIN
 		-- simply re-initialize.
 		IF (reset'event AND reset = '1') THEN
 			FOR i IN 0 TO block_num - 1 LOOP
-				cache_checkup_table(i) <= "11000000"; -- Invalid, non-dirty, with 0 tag.
+				cache_checkup_table(i) <= "00000000"; -- Invalid, non-dirty, with 0 tag.
 			END LOOP;
 
 			-- If this is not a reset signal,
@@ -103,13 +103,13 @@ BEGIN
 						request_word_idx <= to_integer(unsigned(s_addr(3 DOWNTO 2)));
 						request_addr <= s_addr;
 
-						IF (cache_checkup_table(request_block_idx)(7) = '1') THEN -- The requested block is invalid.
+						IF (cache_checkup_table(request_block_idx)(7) = '0') THEN -- The requested block is invalid.
 							current_state <= INVALID;
 						ELSIF (cache_checkup_table(request_block_idx)(5 DOWNTO 0) = s_addr(14 DOWNTO 9)) THEN -- The requested block is valid and match.
 							current_state <= VALID_AND_MATCH;
-						ELSIF (cache_checkup_table(request_block_idx)(6) = '0') THEN -- The requested block is valid, mis-matched, and dirty.
+						ELSIF (cache_checkup_table(request_block_idx)(6) = '1') THEN -- The requested block is valid, mis-matched, and dirty.
 							current_state <= MISMATCH_AND_DIRTY;
-						ELSIF (cache_checkup_table(request_block_idx)(6) = '1') THEN -- The requested block valid, mis-matched, and non-dirty.
+						ELSIF (cache_checkup_table(request_block_idx)(6) = '0') THEN -- The requested block valid, mis-matched, and non-dirty.
 							current_state <= MISMATCH_AND_NON_DIRTY;
 						END IF;
 					END IF;
@@ -123,7 +123,7 @@ BEGIN
 						s_readdata <= cache_memory(request_block_idx * 4 + request_word_idx);
 					ELSIF (s_write = '1') THEN -- Write case.
 						cache_memory(request_block_idx * 4 + request_word_idx) <= s_writedata;
-						cache_checkup_table(request_block_idx)(6) <= '0';
+						cache_checkup_table(request_block_idx)(6) <= '1';
 					END IF;
 
 					s_waitrequest <= '0'; -- Tell the core to proceed.
@@ -147,8 +147,8 @@ BEGIN
 				WHEN MEMORY_READ_WAIT =>
 					IF (m_read = '0') THEN
 						IF (current_rw_word_count = 4) THEN -- completed.
-							cache_checkup_table(request_block_idx)(7) <= '0'; -- Making this block valid.
-							cache_checkup_table(request_block_idx)(6) <= '1'; -- Making this block non-dirty.
+							cache_checkup_table(request_block_idx)(7) <= '1'; -- Mark this block valid.
+							cache_checkup_table(request_block_idx)(6) <= '0'; -- Mark this block non-dirty.
 							cache_checkup_table(request_block_idx)(5 DOWNTO 0) <= request_tag; -- Update its tag.
 							current_state <= VALID_AND_MATCH;
 							current_rw_byte_count := 0;
