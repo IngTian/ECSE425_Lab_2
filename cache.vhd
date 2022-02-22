@@ -63,7 +63,7 @@ BEGIN
 		-- Initialize the cache by marking
 		-- all blocks invalid.
 		IF (now < 1 ps) THEN
-			s_waitrequest <= '0';
+			s_waitrequest <= '1';
 			m_read <= '0';
 			m_write <= '0';
 			FOR i IN 0 TO block_num - 1 LOOP
@@ -83,6 +83,8 @@ BEGIN
 		ELSIF (clock'event AND clock = '1') THEN
 			CASE current_state IS
 				WHEN IDLE =>
+					s_waitrequest <= '1'; -- The wait request is high by default.
+
 					-- In the idle state, we should
 					-- inquire on the s_read and s_write
 					-- status. If both signals are idle,
@@ -94,8 +96,6 @@ BEGIN
 						-- If either works, we look into the specific address and
 						-- decide on dirty/non-dirty, match/mismatch, and valid/invalid
 						-- of the word being required.
-
-						s_waitrequest <= '1'; -- Tell the core to wait.
 
 						-- Record address components for convenience.
 						request_tag <= s_addr(14 DOWNTO 9);
