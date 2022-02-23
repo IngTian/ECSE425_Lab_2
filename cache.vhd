@@ -147,7 +147,7 @@ BEGIN
 					-- we shall write data back to memory.
 					current_state <= MEMORY_WRITE_WAIT;
 					mem_read_addr := to_integer(unsigned(s_addr(14 DOWNTO 4) & "0000"));
-					mem_write_addr := to_integer(unsigned(cache_checkup_table(request_block_idx * 4 + request_word_idx)(5 DOWNTO 0) & s_addr(8 DOWNTO 4) & "0000"));
+					mem_write_addr := to_integer(unsigned(cache_checkup_table(request_block_idx)(5 DOWNTO 0) & s_addr(8 DOWNTO 4) & "0000"));
 					current_rw_byte_count := 0;
 					current_rw_word_count := 0;
 				WHEN MEMORY_READ_WAIT =>
