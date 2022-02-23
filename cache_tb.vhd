@@ -149,12 +149,12 @@ BEGIN
         WAIT FOR clk_period;
         
         
-        s_addr <= "00000000000000000000000000000001";
+        s_addr <= "00000000000000000000000000010000";
         s_read <= '0';
         s_write <= '1';
         s_writedata <= x"4A69D98A";
         WAIT UNTIL rising_edge(s_waitrequest);
-        s_addr <= "00000000000000000000000000000001";
+        s_addr <= "00000000000000000000000000010000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL rising_edge(s_waitrequest);
@@ -208,7 +208,7 @@ BEGIN
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL rising_edge(s_waitrequest);
-        ASSERT s_readdata = x"BCBE0DCE" REPORT "test 6 failed! [Write,Valid,Non-Dirty,Miss]" SEVERITY error;
+        ASSERT s_readdata = x"BCBE0DCE" REPORT "test 6 failed! [Write,Valid,Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
@@ -248,32 +248,42 @@ BEGIN
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL rising_edge(s_waitrequest);
-        ASSERT s_readdata = x"B99EAD80" REPORT "test 9 failed! [Write,Valid,Non-Dirty,Miss]" SEVERITY error;
+        ASSERT s_readdata = x"B99EAD80" REPORT "test 9 failed! [Write,Valid,Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
         
         
-        s_addr <= "00000000000000000000000000000000";
+        s_addr <= "00000000000000000000000000100000";
+        s_read <= '1';
+        s_write <= '0';
+        WAIT UNTIL rising_edge(s_waitrequest);
+        ASSERT s_readdata = x"23222120" REPORT "test 10 failed! [Read,Invalid,Non-Dirty,Miss]" SEVERITY error;
+        s_read <= '0';
+        s_write <= '0';
+        WAIT FOR clk_period;
+       
+       
+        s_addr <= "00000000000000000000001000100000";
         s_read <= '0';
         s_write <= '1';
         s_writedata <= x"D730742C";
         WAIT UNTIL rising_edge(s_waitrequest);
-        s_addr <= "00000000000000000000000000000000";
+        s_addr <= "00000000000000000000001000100000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL rising_edge(s_waitrequest);
-        ASSERT s_readdata = x"D730742C" REPORT "test 10 failed! [Write,Valid,Dirty,Miss]" SEVERITY error;
+        ASSERT s_readdata = x"D730742C" REPORT "test 11 failed! [Write,Valid,Non-dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
         
         
-        s_addr <= "00000000000000000000001000000000";
+        s_addr <= "00000000000000000000000000100000";
         s_read <= '1';
         s_write <= '0';
         WAIT UNTIL rising_edge(s_waitrequest);
-        ASSERT s_readdata = x"B99EAD80" REPORT "test 11 failed! [Read,Valid,Dirty,Miss]" SEVERITY error;
+        ASSERT s_readdata = x"23222120" REPORT "test 12 failed! [Read,Valid,Dirty,Miss]" SEVERITY error;
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
