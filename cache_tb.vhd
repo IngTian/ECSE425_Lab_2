@@ -28,7 +28,10 @@ ARCHITECTURE behavior OF cache_tb IS
             m_readdata : IN STD_LOGIC_VECTOR (7 DOWNTO 0);
             m_write : OUT STD_LOGIC;
             m_writedata : OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
-            m_waitrequest : IN STD_LOGIC
+            m_waitrequest : IN STD_LOGIC;
+
+            -- Cache Stats
+            checkup_value : OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
         );
     END COMPONENT;
 
@@ -67,6 +70,8 @@ ARCHITECTURE behavior OF cache_tb IS
     SIGNAL m_write : STD_LOGIC;
     SIGNAL m_writedata : STD_LOGIC_VECTOR (7 DOWNTO 0);
     SIGNAL m_waitrequest : STD_LOGIC;
+    
+    SIGNAL checkup_value : STD_LOGIC_VECTOR (7 downto 0);
 
 BEGIN
 
@@ -89,7 +94,9 @@ BEGIN
         m_readdata => m_readdata,
         m_write => m_write,
         m_writedata => m_writedata,
-        m_waitrequest => m_waitrequest
+        m_waitrequest => m_waitrequest,
+
+        checkup_value => checkup_value
     );
 
     MEM : memory
@@ -147,8 +154,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000000000010000";
         s_read <= '0';
         s_write <= '1';
@@ -162,8 +167,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '1';
         s_write <= '0';
@@ -172,8 +175,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '1';
         s_write <= '0';
@@ -182,8 +183,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '0';
         s_write <= '1';
@@ -197,8 +196,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
@@ -212,8 +209,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000000000000000";
         s_read <= '0';
         s_write <= '1';
@@ -227,8 +222,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000000000000000";
         s_read <= '1';
         s_write <= '0';
@@ -237,8 +230,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000001000000000";
         s_read <= '0';
         s_write <= '1';
@@ -252,8 +243,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000000000100000";
         s_read <= '1';
         s_write <= '0';
@@ -262,8 +251,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-       
-       
         s_addr <= "00000000000000000000001000100000";
         s_read <= '0';
         s_write <= '1';
@@ -277,8 +264,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         s_addr <= "00000000000000000000000000100000";
         s_read <= '1';
         s_write <= '0';
@@ -287,8 +272,6 @@ BEGIN
         s_read <= '0';
         s_write <= '0';
         WAIT FOR clk_period;
-        
-        
         REPORT "DONE";
         WAIT;
 

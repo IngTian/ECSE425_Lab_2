@@ -26,7 +26,10 @@ ENTITY cache IS
 		m_readdata : IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 		m_write : OUT STD_LOGIC;
 		m_writedata : OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
-		m_waitrequest : IN STD_LOGIC
+		m_waitrequest : IN STD_LOGIC;
+
+		-- Cache Stats
+		checkup_value : OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
 	);
 END cache;
 
@@ -50,6 +53,8 @@ ARCHITECTURE arch OF cache IS
 	SIGNAL cache_checkup_table : CACHE_CHECKUP;
 	SIGNAL current_state : state_type := IDLE;
 BEGIN
+	checkup_value <= cache_checkup_table(to_integer(unsigned(s_addr(8 DOWNTO 4))));
+
 	cache_process : PROCESS (clock, reset)
 		VARIABLE request_block_idx : INTEGER RANGE 0 TO 31 := 0;
 		VARIABLE request_tag : STD_LOGIC_VECTOR(5 DOWNTO 0);
